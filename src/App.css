@@ -13,6 +13,31 @@
   }
 }
 
+/* .navbar a {
+  color: #09348c;
+  text-decoration: none;
+}
+
+.navbar a:hover {
+  color: #0c1c3d;
+  text-decoration: underline;
+} */
+
+.appointment-marker-red {
+  width: 8px;
+  height: 8px;
+  background-color: red;
+  border-radius: 50%;
+}
+
+.appointment-marker-green {
+  width: 8px;
+  height: 8px;
+  background-color: green;
+  border-radius: 50%;
+}
+
+
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
