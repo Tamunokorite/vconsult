@@ -53,6 +53,10 @@
   color: #61dafb;
 }
 
+.home-img {
+  height: 600px;
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);

@@ -6,6 +6,7 @@ import { Card, Container } from "react-bootstrap";
 import { json, useNavigate } from "react-router-dom";
 import Calendar from 'react-calendar';
 import { PaystackButton } from "react-paystack";
+import Jitsi from 'react-jitsi';
 
 export default function ViewAppointments()
 {
@@ -16,6 +17,7 @@ export default function ViewAppointments()
     const aType = window.location.href.includes("requests") ? "requests" : window.location.href.includes("doctors") ? "doctors" : "patients";
     const [name, setName] = useState("");
     const [selectedCat, setSelectedCat] = useState("");
+    const [meetingLink, setMeetingLink] = useState('');
     const prices = {
         "Primary Care": 1500000, 
         "Pediatrics": 2000000, 
@@ -36,6 +38,16 @@ export default function ViewAppointments()
             alert("An error occured while fetching user data");
         }
     };
+
+    const generateUniqueId = () => {
+        // Generate a random string of characters
+        const randomString = Math.random().toString(36).substr(2, 9);
+    
+        // Create a unique ID by combining the random string and current timestamp
+        const uniqueId = `${randomString}-${Date.now()}`;
+    
+        return uniqueId;
+      };
 
     const fetchSelectedCat = async () => {
         try {
@@ -70,8 +82,19 @@ export default function ViewAppointments()
                   <p>Time: {appointment.date.toLocaleTimeString()}</p>
                   <p>Patient: {appointment.data.patient.name}</p>
                   <p>Notes: {appointment.data.notes}</p>
+                  {appointment.data.paid && <a href={appointment.data.meetingLink}>Meeting Link</a>}
                 </div>
               );
+        }
+        if (appointment.data.paid) {
+            return (
+                <div key={appointment.id}>
+                  <strong>{appointment.data.category}</strong>
+                  <p>Date: {appointment.date.toLocaleDateString()}</p>
+                  <p>Time: {appointment.date.toLocaleTimeString()}</p>
+                  <a href={appointment.data.meetingLink}>Meeting Link</a>
+                </div>
+            );
         }
         if (appointment.data.accepted) {
             const componentProps = {
@@ -84,15 +107,19 @@ export default function ViewAppointments()
                 publicKey,
                 text: "Get Meeting Link ₦" + prices[appointment.data.category]/100,
                 onSuccess: () => {
+                    const meetingId = generateUniqueId();
+                    const url = `https://meet.jit.si/${meetingId}`;
+                    setMeetingLink(url);
                     const appointmentID = doc(db, 'appointments', appointment.id);
                     // console.log(JSON.stringify(appointmentID));
                     updateDoc(appointmentID, {
-                        paid: true
+                        paid: true,
+                        meetingLink: url
                     })
                     .then((r) => {
                         const q = query(collection(db, "users"), where("uid", "==", appointment.data.doctor.id));
                         getDocs(q)
-                        .then((r) => {
+                        .then(async (r) => {
                             console.log(r.docs);
                             const data = r.docs[0].data();
                             const updatedBalance = data.balance;
@@ -124,6 +151,7 @@ export default function ViewAppointments()
                   <p>Time: {appointment.date.toLocaleTimeString()}</p>
                   <p>Doctor: {appointment.data.doctor.name}</p>
                   <PaystackButton {...componentProps} />
+                  {meetingLink && <a href={meetingLink}>{meetingLink}</a>}
                 </div>
               );
         }
@@ -229,7 +257,7 @@ export default function ViewAppointments()
                 {appointments.filter(getNewAppointments).map((appointment) => (
                     <Card style={{ width: '18rem' }} key={appointment.id} className="mt-5 mb-2">
                     <Card.Body>
-                      <Card.Title>{appointment.data.category}</Card.Title>
+                      <Card.Title>{appointment.data.patient.name}</Card.Title>
                       <Card.Subtitle className="mb-2 text-muted">{appointment.data.date} {appointment.data.time}</Card.Subtitle>
                       {
                         appointment.data.notes === "" ? "" : 
